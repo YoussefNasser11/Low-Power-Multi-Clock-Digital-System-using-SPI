@@ -1,0 +1,73 @@
+#UPF#
+
+set_design_attributes -elements {.} -attribute conservative_diff_supply_only_isolation true
+set_design_attributes -elements {.} -attribute enable_state_propagation_in_add_power_state TRUE
+set_design_attributes -elements {.} -attribute correlated_supply_group "*"
+
+set upf_create_implicit_supply_sets true
+
+#deep sleep domain
+create_power_domain PD_dpsleep -include_scope
+
+#active domain
+create_power_domain PD_active -elements {TOP_CRC_SER_Insta}
+
+#...................................create supply ports and nets ..............................#
+#ports
+create_supply_port vdd_dsleep_top
+create_supply_port vdd_active_top
+create_supply_port vss_top
+
+#nets
+create_supply_net vdd_dsleep_top
+create_supply_net vdd_active_top
+create_supply_net vss_top 
+
+#to connect top level power domain supply ports to supply nets
+connect_supply_net vdd_dsleep_top  -ports  vdd_dsleep_top
+connect_supply_net vdd_active_top  -ports  vdd_active_top
+connect_supply_net vss_top  -ports  vss_top
+
+
+#set primary supplies for each power domain 
+create_supply_set PD_dpsleep.primary \
+-function {power vdd_dsleep_top} \
+-function {ground vss_top}
+-update
+
+create_supply_set PD_dpsleep.default_isolation \
+-function {power vdd_dsleep_top} \
+-function {ground vss_top}
+-update
+
+create_supply_set PD_active.primary \
+-function {power vdd_active_top} \
+-function {ground vss_top}
+-update
+
+
+associate_supply_set PD_dpsleep.primary -handle PD_active.default_isolation
+
+
+#...................................isolation strategies ..............................#
+
+set_isolation active_iso_0 -isolation_supply_set PD_active.primary -domainPD_active - -clamp_value 0 -applies_to outputs -diff_supply_only true 
+set_isolation_control active_iso_0 -domain PD_active  -isolation_sigal o_pm_sleep_iso_and  -isolation_sense low -location parent
+
+set_isolation active_iso_1  -isolation_supply_set PD_active.primary -domain PD_active -clamp_value 1  -diff_supply_only true -applies_to_outputs  -elements {BIT_SYNC_done_tick/SYNC}
+
+
+set_isolation_control active_iso_1 -domain PD_active  -isolation_sigal o_pm_sleep_iso_and  -isolation_sense low -location parent
+
+
+#...................................create power state table and add power states ..............................#      
+add_power_state PD_dpsleep.primary  -state VDD_ALWAYS_ON_STATE {-supply_expr {power == `{FULL_ON, 0.4, 0.5, 0.7}}} 
+add_power_state PD_dpsleep.primary  -state VSS_ON_STATE        {-supply_expr {ground == `{FULL_ON, 0}}}   
+
+add_power_state PD_active.primary  -state ACTIVE_ON_STATE      {-supply_expr {power == `{FULL_ON, 0.4, 0.7, 0.7}}} 
+add_power_state PD_active.primary  -state ACTIVE_OFF_STATE     {-supply_expr {power == `{OFF}}}                 
+
+
+create_pst top_pst -supplies [list PD_dpsleep.primary.power  PD_active.primary.power  PD_dpsleep.primary.ground]
+add_pst_state ALWAYS_ON  -pst top_pst -state {VDD_ALWAYS_ON_STATE  ACTIVE_OFF_STATE   VSS_ON_STATE}
+add_pst_state ACTIVE  -pst top_pst -state {VDD_ALWAYS_ON_STATE  ACTIVE_ON_STATE   VSS_ON_STATE}	

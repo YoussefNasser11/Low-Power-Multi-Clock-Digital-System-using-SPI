@@ -1,0 +1,35 @@
+##System SDGC for Spyglass
+current_design TOP_SYSTEM
+//Define My Clocks
+
+clock -name sys_clk -domain clka -tag clka -period 31.25 -edge {0 15.625}
+clock -name sys_clk -domain clkb -tag clkb -period 38.462 -edge {0 19.231}
+
+//Define My Resets
+
+reset -name TOP_SYSTEM.csn -value 1
+reset -async -name sys_reset -value 0
+
+//Define My Ports
+
+abstract_port -ports sys_reset -clock sys_clk
+abstract_port -ports csn -clock spi_clock
+abstract_port -ports MOSI -clock spi_clock
+abstract_port -ports MISO -clock spi_clock
+abstract_port -ports o_miso_ena -clock spi_clock
+abstract_port -ports packet -clock sys_clk
+
+//Define Reset Synch
+
+reset_synchronizer -name TOP_SYSTEM.Rst_D1.Sync_RST -clock spi_clock-reset sys_reset value 0
+reset_synchronizer -name TOP_SYSTEM.Rst_D2.Sync_RST -clock sys_clk -reset sys_reset value 0
+
+//Define BIT Synch 
+
+sync_cell -name BIT_SYNC -from_clk spi_clock -to_clk sys_clk
+sync_cell -name BIT_SYNC -from_clk sys_clk -to_clk spi_clock
+
+//Data quasi static
+
+current_design "TOP_SYSTEM"
+quasi_static -name "Payload_data" -override -disable_sva
