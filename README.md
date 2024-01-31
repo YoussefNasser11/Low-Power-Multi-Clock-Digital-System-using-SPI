@@ -1,3 +1,4 @@
+in order to get pdf douc , send me an email to youssefnasserabdelaal@gmail.com
 o Key Blocks
 SPI Master: Within the project, I was responsible for developing a test bench that emulated the SPI Master. Works with SPI CLK 26MHz.
 SPI Slave: SPI Slave block received data from the Master during write operations and stored it in the register file. It also transmitted data from the register file to the Master during read operations. Works with SPI CLK 26MHz.
