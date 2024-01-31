@@ -9,11 +9,13 @@ CRC 16: I implemented the CRC block, performing logical operations to generate c
 Serializer: It receives data bytes from the Register File and checks bytes from the CRC. It serialized the combined data and transmitted it to the Physical layer at a divided clock rate of either 1Mbps or 2Mbps, based on the selected mode. Works with Sys CLK 32MHz.
 
 o Design Topologies
+
 Frequency Divider: Implemented a frequency divider to divide the system clock from 32MHz to 1MHz or 2MHz.
 Clock Gating: Utilized clock gating techniques for the whole system.
 Synchronizers: Incorporated CDC and RDC synchronizers to ensure reliable data transfer between different domains.
 
 o Design Flow
+
 Design Architecture: Defined the system architecture and identified key components.
 RTL Developed the RTL using Verilog.
 Verification: Conducted linting, CDC, and RDC checks using Spyglass
@@ -24,4 +26,5 @@ DFT Two Scan chains, one for each domain using the Multiplexing method.
 Test Max was used for ATPG.
 
 o Scripting
+
 Synthesis, Formality, DFT, and ATPG using TCL.
